@@ -1,12 +1,10 @@
 # sign-changing-repro
-Reproduction material for the paper " by Erik Burman, and Janosch Preuss
-
 This repository contains software and instructions to reproduce the numerical experiments in the paper
 > A hybridized Nitsche method for sign-changing elliptic PDEs
 >
-> * authors: Erik Burman^1, Alexandre Ern^2 and Janosch Preuss^1
-> * 1: University College London
-> * 2: CERMICS and INRIA Paris
+> * authors: Erik Burman(1), Alexandre Ern(2) and Janosch Preuss(1)
+> * (1): University College London
+> * (2): CERMICS and INRIA Paris
 
 
 The instructions for running the image are geared towards users who have access to a Unix like environment with a `bash` shell.
@@ -30,7 +28,15 @@ distributions the command for the latter is either `sudo systemctl start docker`
 
 ## Manual installation
 
-TODO
+We need to install `NGSolve` and a small extension called `ngs_refsol` manually. For reference: The code has been developed 
+using commit `819b0d3da731bb078204fa54293be0d9feb45842` of the former and commit `f3c5d52cae6a8f24a488d94337178956ace07abc` of the latter. 
+Installation instructions for `NGSolve` using package managers are available [here](https://ngsolve.org/downloads) and instructions 
+to build from source are [here](https://docu.ngsolve.org/latest/install/install_sources.html). Once `NGSolve` has been installed we can 
+install `ngs_refsol` as follows: 
+
+    git clone https://gitlab.gwdg.de/learned_infinite_elements/ngs_refsol.git 
+    cd ngs_refsol
+    python3 setup.py install --user
 
 For compiling the figures you will also need a recent `latex` distribution installed on your machine.
 Now we are ready to clone the repository using 
@@ -39,6 +45,9 @@ Now we are ready to clone the repository using
 
 and proceed as described in [How to reproduce](#repro).
  
+
+# <a name="repro"></a> How to reproduce
+
 ## <a name="Fig2"></a> Figure 2
 Change to directory `scripts`. Run
 
@@ -46,7 +55,7 @@ Change to directory `scripts`. Run
     python3 symmetric_cavity-easy.py 2 
     python3 symmetric_cavity-easy.py 3 
 
-Afterwards, new data files of the form "Cavity-k__i__-unstructured-easy.dat" will be available in the folder `data`. Here, __i__ in [1,2,3] describes the finite element order k as 
+Afterwards, new data files of the form `Cavity-k__i__-unstructured-easy.dat` will be available in the folder `data`. Here, __i__ in [1,2,3] describes the finite element order k as 
 defined in the paper. The data in the files is structured in the follwing columns: 
 
 * h: Proportional to the width of the mesh. 
