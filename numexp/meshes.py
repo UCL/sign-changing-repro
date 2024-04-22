@@ -659,6 +659,8 @@ def CreateMetamaterialMesh(maxh=0.4,order_geom=5,domain_maxh=0.03):
     #geo.SetDomainMaxH(3, domain_maxh)
     geo.SetDomainMaxH(2, maxh/3)
     geo.SetDomainMaxH(3, maxh/3)
+    #geo.SetDomainMaxH(2, maxh/2)
+    #geo.SetDomainMaxH(3, maxh/2)
     
     #geo.SetDomainMaxH(4, 0.2)
     

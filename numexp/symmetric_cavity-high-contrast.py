@@ -13,8 +13,8 @@ else:
 
 # Problem parameters for the cavity example
 problem = { }
-sigma = [1 ,-1.001]
-#sigma = [1 ,-2]
+#sigma = [1 ,-1.001]
+sigma = [1 ,-200]
 problem["sigma"] = sigma
 solution = [ ((x+1)*(x+1)-(1/(sigma[0]+sigma[1]))*(2*sigma[0]+sigma[1])*(x+1))*sin(pi*y),  (1/(sigma[0]+sigma[1]))*sigma[0]*(x-1)*sin(pi*y) ]
 problem["solution"] = solution
@@ -92,7 +92,7 @@ plt.xlabel("h")
 plt.legend()
 plt.show()
 
-name_str = "Cavity-k{0}-unstructured.dat".format(order)
+name_str = "Cavity-k{0}-unstructured-high-contrast.dat".format(order)
 #if order == 1:
 #    results = [maxhnp, np.array(h1nat,dtype=float), np.array(hybridstab,dtype=float), np.array( hybridstab_reduced_dual_stab , dtype=float) ]
 #    header_str = "h h1nat hybridstab reduceddualstab"
@@ -108,49 +108,3 @@ np.savetxt(fname ="../data/{0}".format(name_str),
                            comments = '')
 
 
-
-if order == 1:
-
-    solver ="umfpack" 
-    #for order,stabs in zip([2],[stabs_order[1]]):
-
-    nnstars = all_nnstars[1:] 
-    orders = {"primal-bulk": order,
-              "primal-IF": order,
-              "dual-bulk": 1,
-              "dual-IF": order }
-
-    h1nat = [ ]
-    hybridstab = [ ]
-    #hybridstab_reduced_dual_stab = [ ]
-    for nstars in nnstars:
-        #if nstars % 2 == 0:
-        mesh = MakeStructuredCavityMesh(nstars=nstars) 
-        #else:
-        #    mesh =  MakeUnsymmetricStructuredCavityMesh(nstars=nstars) 
-        h1nat.append(SolveStandardFEM(mesh,orders,problem,solver))
-        hybridstab.append(SolveHybridStabilized(mesh,orders,stabs,problem,False,solver))
-        #hybridstab_reduced_dual_stab.append(SolveHybridStabilized(mesh,orders,stabs_order_reduced_dual_stab[0],problem))
-    maxhs = 1/(2*nnstars)
-
-    plt.loglog(maxhs,h1nat,label="natural",marker='o')
-    plt.loglog(maxhs,hybridstab,label="stabilized",marker='+')
-    maxhnp = np.array(maxhs) 
-    #plt.loglog(maxhs,hybridstab_reduced_dual_stab,label="reduced dual stab",marker='+')
-    #plt.loglog(maxhs,5*maxhnp,color="gray",label="$\mathcal{O}(h)$",marker='+')
-
-    plt.title("H1-error")
-    plt.xlabel("h")
-    plt.legend()
-    plt.show()
-
-    name_str = "Cavity-k{0}-symmetric.dat".format(order)
-    #results = [maxhnp, np.array(h1nat,dtype=float), np.array(hybridstab,dtype=float), np.array( hybridstab_reduced_dual_stab , dtype=float) ]
-    #header_str = "h h1nat hybridstab reduceddualstab"
-    results = [maxhnp, np.array(h1nat,dtype=float), np.array(hybridstab,dtype=float) ]
-    header_str = "h h1nat hybridstab"
-
-    np.savetxt(fname ="../data/{0}".format(name_str),
-                               X = np.transpose(results),
-                               header = header_str,
-                               comments = '')

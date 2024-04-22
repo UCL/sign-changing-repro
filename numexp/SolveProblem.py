@@ -5,12 +5,14 @@ import matplotlib.pyplot as plt
 import sys
 sys.path.append("/home/janosch/projects//sign_changing_coeff/numexp")
 from meshes import MakeStructuredCavityMesh,CreateUnstructuredMesh
-solver = "pardiso"
+#solver = "pardiso"
 #solver = "umfpack"
 from ngsolve.la import EigenValues_Preconditioner
 from decimal import Decimal
+#from ngsolve.solvers import GMRes
+from solver_tools import GetPyPardisoSolver, GetFreedofsList
 
-def SolveStandardFEM(mesh,orders,problem):
+def SolveStandardFEM(mesh,orders,problem,solver="umfpack"):
 
     sigma = problem["sigma"]
     solution = problem["solution"]
@@ -36,7 +38,15 @@ def SolveStandardFEM(mesh,orders,problem):
     gfu = GridFunction(V)
     f.vec.data -= a.mat * gfu.vec
     print("Solving linear system")
-    gfu.vec.data += a.mat.Inverse(V.FreeDofs() ,inverse=solver  )* f.vec
+    if solver == "pypardiso":
+        free_dofs, non_free_dofs =  GetFreedofsList( V.FreeDofs() )
+        psolver = GetPyPardisoSolver(a,non_free_dofs)
+        bp = f.vec.FV().NumPy()[free_dofs]
+        xp =  np.zeros(len( free_dofs))
+        psolver.solve(bp,xp)
+        gfu.vec.FV().NumPy()[free_dofs] = xp[:]
+    else:
+        gfu.vec.data += a.mat.Inverse(V.FreeDofs() ,inverse=solver  ) * f.vec
 
     err = sum( [ ( (gfu   - solution[i])**2 +  InnerProduct(grad(gfu) - sol_gradient[i], grad(gfu) - sol_gradient[i] )) *  dX[i]  for i in [0,1] ]  ) 
     h1err = sqrt( Integrate(err, mesh) ) 
@@ -46,10 +56,11 @@ def SolveStandardFEM(mesh,orders,problem):
     print(" H1-error  = ", h1err  )
     print(" Relative H1-error  = ", h1err/h1norm  )
     print("")
+    #del psolver
     return h1err/h1norm 
 
 
-def SolveHybridStabilized(mesh,orders,stabs,problem,plot=False):
+def SolveHybridStabilized(mesh,orders,stabs,problem,plot=False,solver="umfpack"):
     
     sigma = problem["sigma"]
     solution = problem["solution"]
@@ -61,7 +72,6 @@ def SolveHybridStabilized(mesh,orders,stabs,problem,plot=False):
     facets_G_indicator = GridFunction(VG0)
     facets_G_indicator.vec[ VG0.GetDofs(mesh.Boundaries("IF")) ]  = 1.0
     
-
     # Primal and dual FESpaces
     Q = FacetFESpace( mesh, order=orders["primal-IF"], dirichlet="outer") 
     Q_dual = FacetFESpace( mesh, order=orders["dual-IF"], dirichlet="outer") 
@@ -71,7 +81,6 @@ def SolveHybridStabilized(mesh,orders,stabs,problem,plot=False):
     Vp_dual =  Compress(H1(mesh, order=orders["dual-bulk"], dirichlet="outer", definedon=mesh.Materials("plus") ,  dgjumps=True))
     Vm_dual = Compress(H1(mesh, order=orders["dual-bulk"], dirichlet="outer", definedon=mesh.Materials("minus") , dgjumps=True))
     VGamma_dual = Compress(Q_dual, active_dofs = Q_dual.GetDofs(mesh.Boundaries("IF"))  )
-
     Vh = Vp_primal *  Vm_primal *  VGamma_primal *  Vp_dual *  Vm_dual * VGamma_dual 
 
     up,um,uG,zp,zm,zG = Vh.TrialFunction()
@@ -114,25 +123,12 @@ def SolveHybridStabilized(mesh,orders,stabs,problem,plot=False):
     aX += sum( [ stabs["CIP"] * h * abs(sigma[i]) * InnerProduct( (gradu[i] - gradu[i].Other()) * nF , (gradv[i] - gradv[i].Other()) * nF ) * dF[i] for i in [0,1] ]  )
     aX += sum( [ stabs["GLS"] * h**2 * calL(u)[i] * calL(v)[i] * dX[i] for i in [0, 1] ] )
     
-    #aX += sum( [ 1e-1 * h**(2*orders["primal-bulk"]) * gradu[i] * gradv[i] * dX[i] for i in [0, 1] ] )
-    #aX += sum( [ 1e-4 * h**3 *  InnerProduct( ( u[i].Operator("hesse") - u[i].Other().Operator("hesse") ) , ( v[i].Operator("hesse") - v[i].Other().Operator("hesse") )  ) * dF[i] for i in [0,1] ]  )
-
     for i in [0,1]:
         #aX += facets_G_indicator * 2*10*order*order/h*jumpv[i]*jumpu[i] * ddT[i]   
         aX += facets_G_indicator * stabs["IF"]/h*jumpv[i]*jumpu[i] * ddT[i]   
 
     # dual stabilization 
     aX += stabs["Dual"] * (-1)*gradz[1]*gradw[1]*dX[1]
-
-    #def P(fun):
-    #    return fun - (fun * nF) * nF
-    #jump_tangential_u =  P(gradu[0].Trace()) - P(gradu[1].Trace())
-    #jump_tangential_v =  P(gradv[0].Trace()) - P(gradv[1].Trace())
-    #aX += facets_G_indicator * 1e0*h*jumpv[i]*jumpu[i] * ddT[i]   
-
-    #jump_tangential_u =  gradu[0].Trace() - gradu[1].Trace()
-    #jump_tangential_v =  gradv[0].Trace() - gradv[1].Trace()
-    #aX += 1e5 *  h * jump_tangential_u * jump_tangential_v * ds(definedon= mesh.Boundaries("IF"))
 
     # right hand side 
     fX = LinearForm(Vh)
@@ -143,15 +139,22 @@ def SolveHybridStabilized(mesh,orders,stabs,problem,plot=False):
     print("assembling linear system")
     with TaskManager():
         aX.Assemble()
-        fX.Assemble()
-
-
+        fX.Assemble()    
+    
     gfuX = GridFunction(Vh)
     gfuXh = gfuX.components
     fX.vec.data -= aX.mat * gfuX.vec
     print("Solving linear system")
-    gfuX.vec.data += aX.mat.Inverse(Vh.FreeDofs() ,inverse=solver  )* fX.vec
-    
+    if solver == "pypardiso":
+        free_dofs, non_free_dofs =  GetFreedofsList( Vh.FreeDofs() )
+        psolver = GetPyPardisoSolver(aX,non_free_dofs)
+        bp = fX.vec.FV().NumPy()[free_dofs]
+        xp =  np.zeros(len( free_dofs))
+        psolver.solve(bp,xp)
+        gfuX.vec.FV().NumPy()[free_dofs] = xp[:]
+    else:
+        gfuX.vec.data += aX.mat.Inverse(Vh.FreeDofs() ,inverse=solver  )* fX.vec
+
     if plot:
         Draw(IfPos(-x,gfuXh[0],gfuXh[1]),mesh,"uh")
         Draw(IfPos(-x,solution[0],solution[1]),mesh,"u")
@@ -166,10 +169,11 @@ def SolveHybridStabilized(mesh,orders,stabs,problem,plot=False):
     print(" H1-error  = ", h1err  )
     print(" Relative H1-error  = ", h1err/h1norm  )
     #input("")
+    #del psolver
     return h1err/h1norm  
 
 
-def SolveHybridStabilizedModified(mesh,orders,stabs,problem,plot=False):
+def SolveHybridStabilizedModified(mesh,orders,stabs,problem,plot=False,solver="umfpack"):
     
     #plus_str = "plus-outer|plus-inner"
     #minus_str = "minus-inner|minus-outer"
@@ -301,8 +305,16 @@ def SolveHybridStabilizedModified(mesh,orders,stabs,problem,plot=False):
     gfuXh = gfuX.components
     fX.vec.data -= aX.mat * gfuX.vec
     print("Solving linear system")
-    gfuX.vec.data += aX.mat.Inverse(Vh.FreeDofs() ,inverse=solver  )* fX.vec
-    
+    if solver == "pypardiso":
+        free_dofs, non_free_dofs =  GetFreedofsList( Vh.FreeDofs() )
+        psolver = GetPyPardisoSolver(aX,non_free_dofs)
+        bp = fX.vec.FV().NumPy()[free_dofs]
+        xp =  np.zeros(len( free_dofs))
+        psolver.solve(bp,xp)
+        gfuX.vec.FV().NumPy()[free_dofs] = xp[:]
+    else:
+        gfuX.vec.data += aX.mat.Inverse(Vh.FreeDofs() ,inverse=solver  )* fX.vec
+
     if plot:
         Draw(IfPos(-x,gfuXh[0],gfuXh[1]),mesh,"uh")
         Draw(IfPos(-x,solution[0],solution[1]),mesh,"u")
@@ -351,6 +363,7 @@ def SolveHybridStabilizedModified(mesh,orders,stabs,problem,plot=False):
 
     #input("")
     #return rel_errs[0], rel_errs[1], h1half_IF
+    del psolver
     return rel_errs[0], h1half_IF
 
 
