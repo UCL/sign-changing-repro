@@ -4,15 +4,10 @@ import matplotlib.pyplot as plt
 import sys
 sys.path.append("/home/janosch/projects//sign_changing_coeff/numexp")
 from meshes import MakeStructuredCavityMesh,CreateUnstructuredMesh,CreateMetamaterialMesh
-#solver = "pardiso"
-solver = "umfpack"
+solver = "pardiso"
+#solver = "umfpack"
 from math import pi 
 from ngs_refsol import FundamentalSolution,FundamentalSolution_grad
-
-if ( len(sys.argv) > 1 and int(sys.argv[1]) in [2,3,4]  ):
-    order = int(sys.argv[1])
-else:
-    raise ValueError('Invalid input!')
 
 
 #('Gamma-inner', 'Gamma-inner', 'Gamma-inner', 'Gamma-inner', 'Gamma-internal', 'Gamma-internal', 'Gamma-internal', 'Gamma-internal', 'Gamma-outer', 'Gamma-outer', 'Gamma-outer', 'Gamma-outer', 'outer', 'outer', 'outer', 'outer')
@@ -42,20 +37,35 @@ omega *= 0.5
 
 r = sqrt(x**2+y**2)
 
+##omega = 8
+#kappa0 = 1
+#kappa1 = kappa0
+#rho0 = 1
+#rho1 = 1 
+
 
 # Parameters 
 
 
+#sigma_dic = {"object": 1/rho0,
+#         "cloak-inner": 1/rho1,
+#         "cloak-outer": -1/rho1,
+#         "host-inner": 1/rho0,
+#         "host-outer": 1/rho0,
+#         "source-buffer-inner": 1/rho0,
+#         "source-buffer-outer": 1/rho0,
+#         "PML": 1/rho0
+#        }
+
 sigma_dic = {"object": 1/rho0,
          "cloak-inner": 1/rho1,
-         "cloak-outer": -1/rho1,
+         "cloak-outer": 1/rho1,
          "host-inner": 1/rho0,
          "host-outer": 1/rho0,
          "source-buffer-inner": 1/rho0,
          "source-buffer-outer": 1/rho0,
          "PML": 1/rho0
         }
-
 #sigma_dic = {"object":  1/rho0,
 #         "cloak-inner": 1/rho0,
 #          "cloak-outer": 1/rho0,
@@ -73,9 +83,20 @@ sigma = [sigma_dic["object"], sigma_dic["cloak-inner"]]
 #         "PML": omega**2,
 #        }
 
-k2 =    {"object": omega**2*(b/a)**4/kappa0,
-         "cloak-inner": -omega**2*(b/r)**4/kappa1,
-         "cloak-outer": omega**2/kappa1,
+
+#k2 =    {"object": omega**2*(b/a)**4/kappa0,
+#         "cloak-inner": -omega**2*(b/r)**4/kappa1,
+#         "cloak-outer": omega**2/kappa1,
+#         "host-inner": omega**2/kappa0,
+#         "host-outer": omega**2/kappa0,
+#         "source-buffer-inner": omega**2/kappa0,
+#         "source-buffer-outer": omega**2/kappa0,
+#         "PML": omega**2/kappa0,
+#        }
+
+k2 =    {"object": omega**2/kappa0,
+         "cloak-inner": omega**2/kappa0,
+         "cloak-outer": omega**2/kappa0,
          "host-inner": omega**2/kappa0,
          "host-outer": omega**2/kappa0,
          "source-buffer-inner": omega**2/kappa0,
@@ -112,10 +133,20 @@ error_outer = "host-outer"
 #stabs = # works good with full dual order
 stabs_order = [{"CIP": 1e-6,"GLS": 1e-6,"Nitsche": 20,"Dual": 1e-6,"IF": 1e-2}, 
                {"CIP": 1e-6,"GLS": 1e-6,"Nitsche": 20,"Dual": 1e-6,"IF": 1e-2},
-               {"CIP": 1e-5,"GLS": 1e-5,"Nitsche": 20,"Dual": 1e-4,"IF": 1e-2},
-               {"CIP": 1e-6,"GLS": 1e-6,"Nitsche": 20,"Dual": 1e-4,"IF": 1e-2},
+               #{"CIP": 1e-5,"GLS": 1e-5,"Nitsche": 20,"Dual": 1e-4,"IF": 1e-2},
+               {"CIP": 1e-5,"GLS": 1e-5,"Nitsche": 20,"Dual": 1e-4,"IF": 1e-1},
                ]
 
+
+# PML 
+C_PML = 50
+ROuter = RPML + 1.0 
+eta = ROuter-RPML
+omega_PML = 0.5*omega_eff
+print("omega_eff = ", omega_eff)
+sigma_r = IfPos(r - RPML, (C_PML/eta)*((r-RPML)/(eta))**2,0)
+s_r = IfPos( r - RPML , 1.0/(1.0 + 1j*sigma_r/omega_PML ), 1.0 )
+stilde_r = 1 + ((1j*C_PML)/(3*r*omega_PML))*((r-RPML)/eta)**3
 
 #stabs = {"CIP": 1e-6,"GLS": 1e-6,"Nitsche": 20,"Dual": 1e-4,"IF": 1e-0}
 
@@ -148,7 +179,7 @@ stabs_order = [{"CIP": 1e-6,"GLS": 1e-6,"Nitsche": 20,"Dual": 1e-6,"IF": 1e-2},
 def SolveMetaMaterialStandardFEM(mesh,order=5):
 
     #omega = 8 
-    mesh.SetPML(pml.Radial(rad=RPML,alpha=1j,origin=(0,0)), "PML")
+    #mesh.SetPML(pml.Radial(rad=RPML,alpha=1j,origin=(0,0)), "PML")
     #sigma_mat = { "object": kappa0/rho0,
     #              "cloak-inner":-kappa1/rho1,
     #              "cloak-outer":-kappa1/rho1,
@@ -192,9 +223,21 @@ def SolveMetaMaterialStandardFEM(mesh,order=5):
     #sigma_coeff = CoefficientFunction( [sigma[0] if mat=="plus" else sigma[1] for mat in mesh.GetMaterials() ] )
     
 
-    a  += sigma_coeff*grad(u)*grad(v)*dx
-    a  += (-1)*k2_coeff*u*v*dx
+    #a  += sigma_coeff*grad(u)*grad(v)*dx
+    #a  += (-1)*k2_coeff*u*v*dx
+    
+    a  += sigma_coeff*grad(u)*grad(v)*dx( definedon=mesh.Materials("object|cloak-inner|cloak-outer|host-inner|host-outer|source-buffer-inner|source-buffer-outer")  ) 
+    a  += (-1)*k2_coeff*u*v*dx( definedon=mesh.Materials("object|cloak-inner|cloak-outer|host-inner|host-outer|source-buffer-inner|source-buffer-outer") ) 
 
+    # PML layer 
+    u_r = (x/r)*grad(u)[0] + (y/r)*grad(u)[1]
+    v_r = (x/r)*grad(v)[0] + (y/r)*grad(v)[1]
+    u_phi = -y*grad(u)[0] + x*grad(u)[1] 
+    v_phi = -y*grad(v)[0] + x*grad(v)[1] 
+
+    a  += sigma_coeff * s_r *  stilde_r * u_r * v_r *  dx( definedon=mesh.Materials("PML")  ) 
+    a  += sigma_coeff * (1/(r**2 * s_r *  stilde_r)) * u_phi * v_phi  * dx( definedon=mesh.Materials("PML")  ) 
+    a  += (-1) * k2_coeff * (stilde_r / s_r)  * u * v  * dx( definedon=mesh.Materials("PML")  ) 
 
     #a  += sigma_coeff*grad(u)*grad(v)*dx
     #a  += (-1)*omega**2*u*v*dx
@@ -231,12 +274,12 @@ def SolveMetaMaterialStandardFEM(mesh,order=5):
     print("Solving linear system")
     gfu.vec.data += a.mat.Inverse(V.FreeDofs() ,inverse=solver  )* f.vec
 
-    mesh.UnSetPML("PML")
+    #mesh.UnSetPML("PML")
     Draw(gfu,mesh,"uh")
     Draw(ref_sol,mesh,"sol")
     Draw(  IfPos(r-c,  IfPos( RPML -r,  gfu  , 0.0 )   , 0.0 ) , mesh,"sol-cut")
     Draw(  IfPos(r-c,  IfPos( RPML -r,  sqrt( (ref_sol.real - gfu.real)**2 + (ref_sol.imag - gfu.imag)**2)  , 0.0 )   , 0.0 ) , mesh,"err")
-    
+    Draw(sigma_r,mesh,"PML")
     #err =  IfPos(r-c-0.25, (  (ref_sol.real - gfu.real)**2 + (ref_sol.imag - gfu.imag)**2),0.0)    *  dx(definedon=mesh.Materials("host")) 
     
     #err =  (  (ref_sol.real - gfu.real)**2 + (ref_sol.imag - gfu.imag)**2)    *  dx(definedon=mesh.Materials("host-outer")) 
@@ -261,6 +304,8 @@ def SolveMetaMaterialStandardFEM(mesh,order=5):
         relative_h1_errors.append( h1err/ h1norm )    
         print("Relative H1 error in {0} = {1}".format(err_d , h1err/ h1norm ))
 
+    
+    #input("")
     #print("relative l2err = ", l2err/ l2norm )
     #print("relative l2err grad = ", l2err_grad/ l2norm_grad )
     #input("")
@@ -272,18 +317,11 @@ def SolveMetaMaterialStandardFEM(mesh,order=5):
 
 
 
-def SolveHybridStabilized(mesh,orders,stabs,plot=False,export_vtk=False,vtk_str="",remove_cloak=False):
-
-    if remove_cloak:
-        sigma_dic["cloak-outer"] = sigma_dic["host-outer"] 
-        k2["cloak-inner"] =  k2["host-outer"]
-        k2["cloak-outer"] =  k2["host-outer"]
-        print("sigma_dic = ", sigma_dic)
-        print("k2 = ", k2)
+def SolveHybridStabilized(mesh,orders,stabs,plot=False):
     
     #mesh.SetPML(pml.Radial(rad=RPML,alpha=1j,origin=(0,0)), "PML")
     
-    mesh.SetPML(pml.Radial(rad=RPML,alpha=1j,origin=(0,0)), "PML")
+    #mesh.SetPML(pml.Radial(rad=RPML,alpha=1j,origin=(0,0)), "PML")
 
     #g = exp(1j*omega0*x)
 
@@ -310,6 +348,14 @@ def SolveHybridStabilized(mesh,orders,stabs,plot=False,export_vtk=False,vtk_str=
 
 
     Vh = Vp_primal *  Vm_primal *  VGamma_primal *  Vp_dual *  Vm_dual * VGamma_dual 
+
+
+    #for el in mesh.Elements():
+    #    Vh.SetOrder(NodeId(CELL,el.nr), orders["primal-bulk"])
+    #    for ed in el.edges:
+    #        Vh.SetOrder(ed, orders["primal-bulk"])
+    #Vh.UpdateDofTables()
+
 
     up,um,uG,zp,zm,zG = Vh.TrialFunction()
     vp,vm,vG,wp,wm,wG  = Vh.TestFunction()
@@ -376,7 +422,22 @@ def SolveHybridStabilized(mesh,orders,stabs,plot=False,export_vtk=False,vtk_str=
     aX = BilinearForm(Vh, symmetric=False)
 
     for reg,i in zip(region_list,idx_map):
-        aX  += (sigma_dic[reg] * gradu[i] * gradw[i] - k2[reg]*u[i]*w[i]  ) * dX[reg]
+        if reg != "PML":
+            aX  += (sigma_dic[reg] * gradu[i] * gradw[i] - k2[reg]*u[i]*w[i]  ) * dX[reg]
+        else:
+            u_r = (x/r)*gradu[i][0] + (y/r)*gradu[i][1]
+            w_r = (x/r)*gradw[i][0] + (y/r)*gradw[i][1]
+            u_phi = -y*gradu[i][0] + x*gradu[i][1] 
+            w_phi = -y*gradw[i][0] + x*gradw[i][1]
+            aX += sigma_dic[reg]  * s_r *  stilde_r * u_r * w_r * dX[reg]
+            aX += sigma_dic[reg]  * (1/(r**2 * s_r *  stilde_r)) * u_phi * w_phi * dX[reg]
+            aX += (-1) * k2[reg] * (stilde_r / s_r)  * u[i] * w[i] * dX[reg]
+
+
+          
+    #a  += sigma_coeff * s_r *  stilde_r * u_r * v_r * dx( definedon=mesh.Materials("PML")  ) 
+    #a  += sigma_coeff * (1/(r**2 * s_r *  stilde_r)) * u_phi * v_phi * dx( definedon=mesh.Materials("PML")  ) 
+    #a  += (-1) * k2_coeff * (stilde_r / s_r)  * u * v * dx( definedon=mesh.Materials("PML")  ) 
 
     # a(u_pm,uG;w_pm,wG)
     #aX  += sum(  sigma[i] * gradu[i] * gradw[i] * dX[i] for i in [0, 1])
@@ -393,7 +454,16 @@ def SolveHybridStabilized(mesh,orders,stabs,plot=False,export_vtk=False,vtk_str=
     # a(v_pm,vG;z_pm,zG)
     #aX  += sum(  sigma[i] * gradv[i] * gradz[i] * dX[i] for i in [0, 1])
     for reg,i in zip(region_list,idx_map):
-        aX  += (sigma_dic[reg] * gradv[i] * gradz[i]  -k2[reg]*v[i]*z[i] ) * dX[reg]
+        if reg != "PML":
+            aX  += (sigma_dic[reg] * gradv[i] * gradz[i]  -k2[reg]*v[i]*z[i] ) * dX[reg]
+        else:
+            v_r = (x/r)*gradv[i][0] + (y/r)*gradv[i][1]
+            z_r = (x/r)*gradz[i][0] + (y/r)*gradz[i][1]
+            v_phi = -y*gradv[i][0] + x*gradv[i][1] 
+            z_phi = -y*gradz[i][0] + x*gradz[i][1]
+            aX += sigma_dic[reg] * s_r *  stilde_r * v_r * z_r * dX[reg]
+            aX += sigma_dic[reg]  * (1/(r**2 * s_r *  stilde_r)) * v_phi * z_phi * dX[reg]
+            aX += (-1) * k2[reg] * (stilde_r / s_r)  * v[i] * z[i] * dX[reg]
 
     for reg,i in zip( jumping_materials, jumping_materials_idx ):
         aX += facets_G_indicator * ( (-1)*sigma_dic[reg]*gradv[i]*nF*jumpz[i] - sigma_dic[reg]*gradz[i]*nF*jumpv[i] 
@@ -420,6 +490,13 @@ def SolveHybridStabilized(mesh,orders,stabs,plot=False,export_vtk=False,vtk_str=
         if reg != "PML":
         #if True:
             aX += stabs["Dual"] * (-1)*gradz[i]*gradw[i]*dX[reg]
+        else:
+            w_r = (x/r)*gradw[i][0] + (y/r)*gradw[i][1]
+            w_phi = -y*gradw[i][0] + x*gradw[i][1]
+            z_r = (x/r)*gradz[i][0] + (y/r)*gradz[i][1]
+            z_phi = -y*gradz[i][0] + x*gradz[i][1]
+            aX += stabs["Dual"] * (-1)* (  s_r * stilde_r * z_r * w_r +  (1/(r**2 * s_r *  stilde_r)) * z_phi * w_phi + z[i]*w[i]  )  * dX[reg]
+
 
     # right hand side 
     fX = LinearForm(Vh)
@@ -478,15 +555,15 @@ def SolveHybridStabilized(mesh,orders,stabs,plot=False,export_vtk=False,vtk_str=
     print("Solving linear system")
     gfuX.vec.data += aX.mat.Inverse(Vh.FreeDofs() ,inverse=solver  )* fX.vec
     
-    mesh.UnSetPML("PML")
-    if False:
+    #mesh.UnSetPML("PML")
+    if True:
         #ref_sol = (1/sigma_dic["host-outer"]) * FundamentalSolution(sqrt(k2["host-outer"])/sqrt(sigma_dic["host-outer"]), dirac_source_pos[0]  ,  dirac_source_pos[1]  ,False)
         Draw(gfuXh[0]  ,mesh,"u0")
         Draw(gfuXh[1]  ,mesh,"u1")
         #Draw(IfPos(r-b,  gfuXh[0]  , IfPos(c-r, gfuXh[1], gfuXh[0]   )  ) ,mesh,"u")
         Draw(IfPos(b-r,  gfuXh[0]  , IfPos(c-r, gfuXh[1],   gfuXh[0]   )  ) ,mesh,"u")
         Draw(  IfPos(r-c,  IfPos( RPML -r,  sqrt( (ref_sol.real - gfuXh[0].real)**2 + (ref_sol.imag - gfuXh[0].imag)**2)  , 0.0 )   , 0.0 ) , mesh,"err")
-        input("")
+        #input("")
     
 
     relative_h1_errors = [] 
@@ -501,12 +578,6 @@ def SolveHybridStabilized(mesh,orders,stabs,plot=False,export_vtk=False,vtk_str=
         relative_h1_errors.append( h1err/ h1norm )    
         print("Relative H1 error in {0} = {1}".format(err_d , h1err/ h1norm ))
     
-    if export_vtk:
-        VTKOutput(ma=mesh, coefs=[ IfPos(b-r,  gfuXh[0].real  , IfPos(c-r, gfuXh[1].real,   gfuXh[0].real   )  )  ],
-                      names=["u"],
-                      filename=vtk_str, subdivision=2).Do()
- 
-    
     #err =  (  (ref_sol.real - gfuXh[0].real)**2 + (ref_sol.imag - gfuXh[0].imag)**2)    *  dx(definedon=mesh.Materials("host-outer")) 
     #l2err = sqrt( Integrate(err, mesh) ) 
     #l2norm = sqrt( Integrate( (  (ref_sol.real)**2 + (ref_sol.imag)**2) *  dx(definedon=mesh.Materials("host-outer")) , mesh) ) 
@@ -518,100 +589,67 @@ def SolveHybridStabilized(mesh,orders,stabs,plot=False,export_vtk=False,vtk_str=
 #SolveHybridStabilized(mesh,orders,stabs,plot=True)
 
 #all_maxhs = np.linspace(0.8,0.1,8,endpoint=False).tolist() +  np.linspace(0.1,0.025,25,endpoint=True).tolist()
-all_maxhs = np.linspace(0.8,0.2,6,endpoint=False).tolist() + np.linspace(0.2,0.1,6,endpoint=False).tolist() +  np.linspace(0.1,0.025,25,endpoint=True).tolist()
-#all_maxhs = [0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.095,0.09,0.08,0.07,0.06,0.05,0.04,0.03]
+#all_maxhs = [0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.095,0.09,0.08,0.07,0.06,0.05,0.04,0.03,0.02,0.01]
+all_maxhs = [0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.095,0.09,0.08,0.07,0.06,0.05]
 #all_maxhs = [0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.095,0.09,0.085,0.08]
+#all_maxhs = [0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.095,0.09,0.085,0.08,0.07,0.06]
+#all_maxhs = [0.09,0.085,0.08,0.07,0.06]
 
-
-
-# Generate Plot of MetaMaterial 
-if order == 3:
-    #mesh = CreateMetamaterialMesh(maxh=0.08,order_geom=5)
-    mesh = CreateMetamaterialMesh(maxh=0.1,order_geom=5)
-    orders = {"primal-bulk": order,
-                  "primal-IF": order,
-                  "dual-bulk": order,
-                  "dual-IF": order}
-    SolveHybridStabilized(mesh,orders,stabs_order[order-1],plot=True, export_vtk=True,vtk_str="MetaMaterial-order{0}".format(order)) 
-
-
-#if False:
 #for order,stabs in zip([1,2,3],stabs_order):
-#for order,stabs in zip([2,3],stabs_order[1:]):
-#for order,stabs in zip([4],[stabs_order[-1]]):
-
-stabs = stabs_order[order-1] 
-
-#for order,stabs in zip([2,3,4],stabs_order[1:]):
+for order,stabs in zip([2,3],stabs_order[1:]):
 #for order,stabs in zip([3],stabs_order[2:]):
 #for order in [2,3]:
 
-orders = {"primal-bulk": order,
-      "primal-IF": order,
-      "dual-bulk": order,
-      "dual-IF": order}
-
-if order == 1:
-    maxhs = all_maxhs[:-11]
-elif order == 2:
-    maxhs = all_maxhs[:-9]
-elif order == 3:
-    maxhs = all_maxhs[:-20]
-elif order == 4:
-    #maxhs = np.linspace(0.8,0.4,6,endpoint=False).tolist() + np.linspace(0.4,0.1,10,endpoint=False).tolist() 
-    #maxhs = np.linspace(0.8,0.2,12,endpoint=False).tolist() + np.linspace(0.2,0.15,3,endpoint=False).tolist() + np.linspace(0.15,0.09,15,endpoint=True).tolist() 
-    #maxhs = np.linspace(0.8,0.15,16,endpoint=False).tolist()  + np.linspace(0.15,0.13,6,endpoint=True).tolist()+[0.126] 
-    maxhs = np.linspace(0.8,0.15,16,endpoint=False).tolist() + [0.15] 
-    #maxhs = all_maxhs[:13]
-else:
-    #maxhs = np.linspace(0.8,0.2,12,endpoint=False).tolist() + np.linspace(0.2,0.1,10,endpoint=False).tolist() 
-    maxhs = np.linspace(0.8,0.2,12,endpoint=False).tolist() + np.linspace(0.2,0.09,15,endpoint=False).tolist() 
-
-err_Galerkin_outer = [ ]
-err_Galerkin_inner = []
-err_Stabilized_outer = [ ]
-err_Stabilized_inner = [ ]
-
-for maxh in maxhs:
-    mesh = CreateMetamaterialMesh(maxh=maxh,order_geom=5)
-    print("Computing for Galerkin method")
-    err_inner, err_outer =  SolveMetaMaterialStandardFEM(mesh, orders["primal-bulk"] )
-    err_Galerkin_inner.append(err_inner)
-    err_Galerkin_outer.append(err_outer)
-    print("Computing for stabilized method")
-    err_inner, err_outer =  SolveHybridStabilized(mesh,orders,stabs,plot=True) 
-    err_Stabilized_inner.append(err_inner)
-    err_Stabilized_outer.append(err_outer)
-
-maxhnp = np.array(maxhs)
-plt.loglog(maxhnp, err_Galerkin_outer ,label="Galerkin-outer",marker='o')
-plt.loglog(maxhnp, err_Galerkin_inner ,label="Galerkin-inner",marker='+')
-plt.loglog(maxhnp,  err_Stabilized_outer ,label="Stabilized-outer",marker='x')
-plt.loglog(maxhnp,  err_Stabilized_inner ,label="Stabilized-inner",marker='x')
-plt.loglog(maxhs, err_Stabilized_inner[4] * maxhnp**order/maxhnp[4]**order ,color="gray",label="$\mathcal{O}(h^k)$",marker='+')
-plt.title("Relative H1-error for k={0}".format(order))
-plt.xlabel("h")
-plt.legend()
-plt.show()
-#plt.savefig("Meta-k{0}".format(order))
-#plt.clf()
-
-name_str = "MetaMaterial-k{0}.dat".format(order)
-results = [maxhnp, np.array(err_Galerkin_inner,dtype=float), np.array(err_Galerkin_outer,dtype=float), np.array( err_Stabilized_outer ,dtype=float), np.array( err_Stabilized_inner ,dtype=float) ]
-header_str = "h Galerkin-inner Galerkin-outer Hybridstab-outer Hybridstab-inner" 
-
-np.savetxt(fname ="../data/{0}".format(name_str),
-                               X = np.transpose(results),
-                               header = header_str,
-                               comments = '')
-
-# Genrate plot without cloak (no MetaMaterial layer)
-if order == 3:
-    #mesh = CreateMetamaterialMesh(maxh=0.08,order_geom=5)
-    mesh = CreateMetamaterialMesh(maxh=0.1,order_geom=5)
     orders = {"primal-bulk": order,
-                  "primal-IF": order,
-                  "dual-bulk": order,
-                  "dual-IF": order}
-    SolveHybridStabilized(mesh,orders,stabs_order[order-1],plot=True, export_vtk=True,vtk_str="NoCloak-order{0}".format(order),remove_cloak=True) 
+          "primal-IF": order,
+          "dual-bulk": order,
+          "dual-IF": order}
+    #orders = {"primal-bulk": order, 
+    #      "primal-IF": order,
+    #      "dual-bulk": 1, # does not work
+    #      "dual-IF": order-1}
+    
+    if order == 1:
+        maxhs = all_maxhs
+    elif order == 2:
+        maxhs = all_maxhs[:-3]
+    else:
+        maxhs = all_maxhs[:-6]
 
+    err_Galerkin_outer = [ ]
+    err_Galerkin_inner = []
+    err_Stabilized_outer = [ ]
+    err_Stabilized_inner = [ ]
+
+    for maxh in maxhs:
+        mesh = CreateMetamaterialMesh(maxh=maxh,order_geom=5)
+        print("Computing for Galerkin method")
+        err_inner, err_outer =  SolveMetaMaterialStandardFEM(mesh, orders["primal-bulk"] )
+        err_Galerkin_inner.append(err_inner)
+        err_Galerkin_outer.append(err_outer)
+        print("Computing for stabilized method")
+        err_inner, err_outer =  SolveHybridStabilized(mesh,orders,stabs,plot=True) 
+        err_Stabilized_inner.append(err_inner)
+        err_Stabilized_outer.append(err_outer)
+
+    maxhnp = np.array(maxhs)
+    plt.loglog(maxhnp, err_Galerkin_outer ,label="Galerkin-outer",marker='o')
+    plt.loglog(maxhnp, err_Galerkin_inner ,label="Galerkin-inner",marker='+')
+    plt.loglog(maxhnp,  err_Stabilized_outer ,label="Stabilized-outer",marker='x')
+    plt.loglog(maxhnp,  err_Stabilized_inner ,label="Stabilized-inner",marker='x')
+    plt.loglog(maxhs, err_Stabilized_inner[4] * maxhnp**order/maxhnp[4]**order ,color="gray",label="$\mathcal{O}(h^k)$",marker='+')
+    plt.title("Relative H1-error for k={0}".format(order))
+    plt.xlabel("h")
+    plt.legend()
+    plt.show()
+    #plt.savefig("Meta-k{0}".format(order))
+    #plt.clf()
+
+    #name_str = "MetaMaterial-k{0}.dat".format(order)
+    #results = [maxhnp, np.array(err_Galerkin_inner,dtype=float), np.array(err_Galerkin_outer,dtype=float), np.array( err_Stabilized_outer ,dtype=float), np.array( err_Stabilized_inner ,dtype=float) ]
+    #header_str = "h Galerkin-inner Galerkin-outer Hybridstab-outer Hybridstab-inner" 
+
+    #np.savetxt(fname ="../data/{0}".format(name_str),
+    #                               X = np.transpose(results),
+    #                               header = header_str,
+    #                               comments = '')

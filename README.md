@@ -6,6 +6,13 @@ This repository contains software and instructions to reproduce the numerical ex
 > * (1): University College London
 > * (2): CERMICS and INRIA Paris
 
+# How to run / install
+We describe two options to setup the software for running the experiments. 
+
+* downloading a `docker image` from `Zenodo` or `Docker Hub` which contains all dependencies and tools to run the application,
+* or installing everything manually on your own local machine. 
+
+We recommend the first option as it is simple and will produce exactly the results given in the paper (as the complete compute environment has been fixed). The second option provides higher flexibility but may be more complicated. It is mainly geared towards users who want to further develop the code.  Please contact <j.preuss@ucl.ac.uk> if problems occur. 
 
 The instructions for running the image are geared towards users who have access to a Unix like environment with a `bash` shell.
 Windows users may use Linux subsystems or tools like [Git BASH](https://gitforwindows.org/) or [MobaXterm](https://mobaxterm.mobatek.net/) to 
@@ -91,7 +98,9 @@ Then, to generate Figure 3. switch to the folder `plots` and run
 ## <a name="Fig2"></a> Figure 4 and 5
 Change to directory `scripts`. Run
 
-    python3 SolveMetaMaterial.py
+    python3 SolveMetaMaterial.py 2
+    python3 SolveMetaMaterial.py 3
+    python3 SolveMetaMaterial.py 4
 
 This will generate all the data. 
 

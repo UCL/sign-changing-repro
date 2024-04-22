@@ -248,6 +248,7 @@ def SolveHybridStabilizedModified(mesh,orders,stabs,problem,plot=False,solver="u
     #aX += sum( [ 1e-0 * h**(2*orders["primal-bulk"]) * gradu[i] * gradv[i] * dX[i] for i in [0, 1] ] )
     #aX += sum( [ 1e-2 * h**(2*orders["primal-bulk"]) * u[i] * v[i] * dX[i] for i in [0, 1] ] )
     #aX += sum( [ 5e-2 * h**3 *  InnerProduct( ( u[i].Operator("hesse") - u[i].Other().Operator("hesse") ) , ( v[i].Operator("hesse") - v[i].Other().Operator("hesse") )  ) * dF[i] for i in [0,1] ]  )
+    
     aX += sum( [ 5e-2 * h**3 *  InnerProduct( ( u[i].Operator("hesse") - u[i].Other().Operator("hesse") ) , ( v[i].Operator("hesse") - v[i].Other().Operator("hesse") )  ) * dF[i] for i in [0,1] ]  )
 
     for i in [0,1]:
@@ -331,7 +332,7 @@ def SolveHybridStabilizedModified(mesh,orders,stabs,problem,plot=False,solver="u
                           filename=vtk_str, subdivision=2).Do()
 
 
-        input("press enter to continue")
+        #input("press enter to continue")
     
     rel_errs = [] 
     dom_str = ["full-bulk","reduced-bulk"]
@@ -363,7 +364,6 @@ def SolveHybridStabilizedModified(mesh,orders,stabs,problem,plot=False,solver="u
 
     #input("")
     #return rel_errs[0], rel_errs[1], h1half_IF
-    del psolver
     return rel_errs[0], h1half_IF
 
 
