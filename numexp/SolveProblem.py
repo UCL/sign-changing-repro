@@ -5,14 +5,12 @@ import matplotlib.pyplot as plt
 import sys
 sys.path.append("/home/janosch/projects//sign_changing_coeff/numexp")
 from meshes import MakeStructuredCavityMesh,CreateUnstructuredMesh
-#solver = "pardiso"
+solver = "pardiso"
 #solver = "umfpack"
 from ngsolve.la import EigenValues_Preconditioner
 from decimal import Decimal
-#from ngsolve.solvers import GMRes
-from solver_tools import GetPyPardisoSolver, GetFreedofsList
 
-def SolveStandardFEM(mesh,orders,problem,solver="umfpack"):
+def SolveStandardFEM(mesh,orders,problem):
 
     sigma = problem["sigma"]
     solution = problem["solution"]
@@ -38,15 +36,7 @@ def SolveStandardFEM(mesh,orders,problem,solver="umfpack"):
     gfu = GridFunction(V)
     f.vec.data -= a.mat * gfu.vec
     print("Solving linear system")
-    if solver == "pypardiso":
-        free_dofs, non_free_dofs =  GetFreedofsList( V.FreeDofs() )
-        psolver = GetPyPardisoSolver(a,non_free_dofs)
-        bp = f.vec.FV().NumPy()[free_dofs]
-        xp =  np.zeros(len( free_dofs))
-        psolver.solve(bp,xp)
-        gfu.vec.FV().NumPy()[free_dofs] = xp[:]
-    else:
-        gfu.vec.data += a.mat.Inverse(V.FreeDofs() ,inverse=solver  ) * f.vec
+    gfu.vec.data += a.mat.Inverse(V.FreeDofs() ,inverse=solver  ) * f.vec
 
     err = sum( [ ( (gfu   - solution[i])**2 +  InnerProduct(grad(gfu) - sol_gradient[i], grad(gfu) - sol_gradient[i] )) *  dX[i]  for i in [0,1] ]  ) 
     h1err = sqrt( Integrate(err, mesh) ) 
@@ -60,7 +50,7 @@ def SolveStandardFEM(mesh,orders,problem,solver="umfpack"):
     return h1err/h1norm 
 
 
-def SolveHybridStabilized(mesh,orders,stabs,problem,plot=False,solver="umfpack"):
+def SolveHybridStabilized(mesh,orders,stabs,problem,plot=False):
     
     sigma = problem["sigma"]
     solution = problem["solution"]
@@ -128,7 +118,9 @@ def SolveHybridStabilized(mesh,orders,stabs,problem,plot=False,solver="umfpack")
         aX += facets_G_indicator * stabs["IF"]/h*jumpv[i]*jumpu[i] * ddT[i]   
 
     # dual stabilization 
-    aX += stabs["Dual"] * (-1)*gradz[1]*gradw[1]*dX[1]
+    aX += stabs["Dual"] * (-1)*gradz[1]*gradw[1]*dX[1] 
+    if solver == "umfpack":
+        aX += stabs["Dual"] * (-1)*gradz[0]*gradw[0]*dX[0]
 
     # right hand side 
     fX = LinearForm(Vh)
@@ -145,15 +137,7 @@ def SolveHybridStabilized(mesh,orders,stabs,problem,plot=False,solver="umfpack")
     gfuXh = gfuX.components
     fX.vec.data -= aX.mat * gfuX.vec
     print("Solving linear system")
-    if solver == "pypardiso":
-        free_dofs, non_free_dofs =  GetFreedofsList( Vh.FreeDofs() )
-        psolver = GetPyPardisoSolver(aX,non_free_dofs)
-        bp = fX.vec.FV().NumPy()[free_dofs]
-        xp =  np.zeros(len( free_dofs))
-        psolver.solve(bp,xp)
-        gfuX.vec.FV().NumPy()[free_dofs] = xp[:]
-    else:
-        gfuX.vec.data += aX.mat.Inverse(Vh.FreeDofs() ,inverse=solver  )* fX.vec
+    gfuX.vec.data += aX.mat.Inverse(Vh.FreeDofs() ,inverse=solver  )* fX.vec
 
     if plot:
         Draw(IfPos(-x,gfuXh[0],gfuXh[1]),mesh,"uh")
@@ -173,7 +157,7 @@ def SolveHybridStabilized(mesh,orders,stabs,problem,plot=False,solver="umfpack")
     return h1err/h1norm  
 
 
-def SolveHybridStabilizedModified(mesh,orders,stabs,problem,plot=False,solver="umfpack"):
+def SolveHybridStabilizedModified(mesh,orders,stabs,problem,plot=False):
     
     #plus_str = "plus-outer|plus-inner"
     #minus_str = "minus-inner|minus-outer"
@@ -306,15 +290,7 @@ def SolveHybridStabilizedModified(mesh,orders,stabs,problem,plot=False,solver="u
     gfuXh = gfuX.components
     fX.vec.data -= aX.mat * gfuX.vec
     print("Solving linear system")
-    if solver == "pypardiso":
-        free_dofs, non_free_dofs =  GetFreedofsList( Vh.FreeDofs() )
-        psolver = GetPyPardisoSolver(aX,non_free_dofs)
-        bp = fX.vec.FV().NumPy()[free_dofs]
-        xp =  np.zeros(len( free_dofs))
-        psolver.solve(bp,xp)
-        gfuX.vec.FV().NumPy()[free_dofs] = xp[:]
-    else:
-        gfuX.vec.data += aX.mat.Inverse(Vh.FreeDofs() ,inverse=solver  )* fX.vec
+    gfuX.vec.data += aX.mat.Inverse(Vh.FreeDofs() ,inverse=solver  )* fX.vec
 
     if plot:
         Draw(IfPos(-x,gfuXh[0],gfuXh[1]),mesh,"uh")
