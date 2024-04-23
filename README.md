@@ -58,9 +58,7 @@ and proceed as described in [How to reproduce](#repro).
 ## <a name="Fig2"></a> Figure 2
 Change to directory `scripts`. Run
 
-    python3 symmetric_cavity-easy.py 1 
-    python3 symmetric_cavity-easy.py 2 
-    python3 symmetric_cavity-easy.py 3 
+    python3 symmetric_cavity-easy.py  
 
 Afterwards, new data files of the form `Cavity-k__i__-unstructured-easy.dat` will be available in the folder `data`. Here, __i__ in [1,2,3] describes the finite element order k as 
 defined in the paper. The data in the files is structured in the follwing columns: 
@@ -71,9 +69,7 @@ defined in the paper. The data in the files is structured in the follwing column
 
 This will gerate the data for the left plot. Now to produce the data for the right plot we run 
 
-    python3 symmetric_cavity-high-contrast.py 1
-    python3 symmetric_cavity-high-contrast.py 2
-    python3 symmetric_cavity-high-contrast.py 3
+    python3 symmetric_cavity-high-contrast.py 
   
 Afterwards, the data will be available in the file `Cavity-k__i__-unstructured-high-contrast.dat` which have the same structure as above.
 Then, to generate Figure 2. switch to the folder `plots` and run 
@@ -83,9 +79,7 @@ Then, to generate Figure 2. switch to the folder `plots` and run
 ## <a name="Fig2"></a> Figure 3
 Change to directory `scripts`. Run
 
-    python3 symmetric_cavity.py 1
-    python3 symmetric_cavity.py 2
-    python3 symmetric_cavity.py 3
+    python3 symmetric_cavity.py 
   
 Afterwards, the data for the unstructed meshes will be available in the file `Cavity-k__i__-unstructured.dat` (to be found in the `data` folder) and 
 the data on the symmetric meshes in the file `Cavity-k1-symmetric.dat`. As above, __i__ in [1,2,3] denotes the polynomial degree.
@@ -98,9 +92,7 @@ Then, to generate Figure 3. switch to the folder `plots` and run
 ## <a name="Fig2"></a> Figure 4 and 5
 Change to directory `scripts`. Run
 
-    python3 SolveMetaMaterial.py 2
-    python3 SolveMetaMaterial.py 3
-    python3 SolveMetaMaterial.py 4
+    python3 SolveMetaMaterial.py 
 
 This will generate all the data. 
 
@@ -132,7 +124,6 @@ The data for the `vtk` plot is available in the file `Cavity-nonsymmetric-k2-uns
 To generate Figure 6, switch to the folder `plots` and run 
 
     lualatex -pdf Unsymmetric-cavity-critical-k2.tex
-
 
 
 
