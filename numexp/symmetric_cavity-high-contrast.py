@@ -50,8 +50,8 @@ for order in [1,2,3]:
 
     for maxh in maxhs:
         mesh = CreateUnstructuredMesh(maxh=maxh)
-        h1nat.append(SolveStandardFEM(mesh,orders,problem,solver))
-        hybridstab.append(SolveHybridStabilized(mesh,orders,stabs,problem,False,solver))
+        h1nat.append(SolveStandardFEM(mesh,orders,problem))
+        hybridstab.append(SolveHybridStabilized(mesh,orders,stabs,problem,False))
 
     plt.loglog(maxhs,h1nat,label="natural",marker='o')
     plt.loglog(maxhs,hybridstab,label="stabilized",marker='+')

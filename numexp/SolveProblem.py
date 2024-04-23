@@ -118,9 +118,8 @@ def SolveHybridStabilized(mesh,orders,stabs,problem,plot=False):
         aX += facets_G_indicator * stabs["IF"]/h*jumpv[i]*jumpu[i] * ddT[i]   
 
     # dual stabilization 
-    aX += stabs["Dual"] * (-1)*gradz[1]*gradw[1]*dX[1] 
-    if solver == "umfpack":
-        aX += stabs["Dual"] * (-1)*gradz[0]*gradw[0]*dX[0]
+    for i in [0,1]:
+        aX += stabs["Dual"] * (-1)*gradz[i]*gradw[i]*dX[i] 
 
     # right hand side 
     fX = LinearForm(Vh)
