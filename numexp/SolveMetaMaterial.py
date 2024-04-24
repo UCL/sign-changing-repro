@@ -342,7 +342,7 @@ for order in [1,2,3]:
         maxhs = all_maxhs[:-5]
     elif order == 3:
         #maxhs = all_maxhs[:-6]
-        maxhs = all_maxhs[:-9]
+        maxhs = all_maxhs[:-11]
     elif order == 4:
         maxhs = np.linspace(0.8,0.15,16,endpoint=False).tolist() + [0.15] 
     else:
