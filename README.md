@@ -118,8 +118,8 @@ Change to directory `scripts`. Run
 
 This will generate all the data. 
 
-* The `vtk` data for the plot without(!) claok (Figure 4 (A)) is available in `NoCloak-order3.vtu`.
-* The `vtk` data for the plot with claok (Figure 4 (B)) is available in `MetaMaterial-order3.vtu`.
+* The `vtk` data for the plot without(!) claok (Figure 4 (A)) is available in `NoCloak-order3.vtu` in the folder `numexp`.
+* The `vtk` data for the plot with claok (Figure 4 (B)) is available in `MetaMaterial-order3.vtu` in the folder `numexp`.
 * The data for the convergence plots in Figure 5 is available in the files `MetaMaterial-k__i__.dat` where __i__ in [2,3,4] denotes the 
 polynomial order of the FEM. These data files contain the following columns 
   * `h` is the mesh width. 
@@ -141,7 +141,7 @@ Change to directory `scripts`. Run
 Two data files will be created:
 * The file `Cavity-nonsymmetric-k2-unstructured-critical.dat` contains in the column `H1` the H1-error and in the column `IF` the error in the H^1/2-norm on the interface.
 * The file `Cavity-nonsymmetric-k2-unstructured-critical-log.dat` contains these columns as well, but the column `fh` gives additionally the logarithmic scaling of h (the x-axis in the right plot) and the column `ref` contains the data for the gray reference line.
-The data for the `vtk` plot is available in the file `Cavity-nonsymmetric-k2-unstructured-critical.vtu`.
+The data for the `vtk` plot is available in the file `Cavity-nonsymmetric-k2-unstructured-critical.vtu` in the folder `numexp`.
 
 To generate Figure 6, switch to the folder `plots` and run 
 

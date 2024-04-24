@@ -32,9 +32,9 @@ for order in [1,2,3]:
     stabs = stabs_order[order-1] 
 
     if order == 1:
-        maxhs = all_maxh[1:]
+        maxhs = all_maxh[1:-4]
     elif order == 2:
-        maxhs = all_maxh[1:-23]
+        maxhs = all_maxh[1:-26]
     else:
         maxhs = all_maxh[:-30]
 

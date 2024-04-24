@@ -35,7 +35,7 @@ for order in [1,2,3]:
     if order == 1:
         maxhs = all_maxh[1:]
     elif order == 2:
-        maxhs = all_maxh[1:-23]
+        maxhs = all_maxh[1:-26]
     else:
         maxhs = all_maxh[:-30]
 
