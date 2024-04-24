@@ -15,7 +15,7 @@ problem["solution-grad"] = [ CoefficientFunction((solution[i].Diff(x),solution[i
 problem["rhs"] = [-sigma[i] * (solution[i].Diff(x).Diff(x) + solution[i].Diff(y).Diff(y))  for i in range(2)]
 
 stabs_order = [  {"CIP": 1e-5,"GLS": 1e-5,"Nitsche": 20,"Dual": 1e-3,"IF": 200},                      
-               {"CIP": 5e-5,"GLS": 5e-5,"Nitsche": 20,"Dual": 5e-1,"IF": 1},
+               {"CIP": 5e-5,"GLS": 5e-5,"Nitsche": 20,"Dual": 8e-2,"IF": 1},
                {"CIP": 5e-5,"GLS": 5e-5,"Nitsche": 20,"Dual": 1e-1,"IF": 50}
               ]
 
