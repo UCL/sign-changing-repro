@@ -64,10 +64,10 @@ error_outer = "host-outer"
 #               {"CIP": 1e-6,"GLS": 1e-6,"Nitsche": 20,"Dual": 1e-4,"IF": 1e-2},
 #               ]
 
-stabs_order = [{"CIP": 1e-6,"GLS": 1e-6,"Nitsche": 20,"Dual": 1e-6,"IF": 1e-2}, 
-               {"CIP": 1e-6,"GLS": 1e-6,"Nitsche": 20,"Dual": 1e-6,"IF": 1e-2},
-               {"CIP": 1e-5,"GLS": 1e-5,"Nitsche": 20,"Dual": 1e-4,"IF": 1e-2},
-               {"CIP": 1e-6,"GLS": 1e-6,"Nitsche": 20,"Dual": 1e-4,"IF": 1e-2},
+stabs_order = [{"CIP": 1e-6,"GLS": 1e-6,"Nitsche": 20,"Dual": 1e-6,"IF": 1e-2,"Tikh":2e-4}, 
+               {"CIP": 1e-6,"GLS": 1e-6,"Nitsche": 20,"Dual": 1e-6,"IF": 1e-2, "Tikh":8e-2},
+               {"CIP": 1e-5,"GLS": 1e-5,"Nitsche": 20,"Dual": 1e-4,"IF": 1e-2,"Tikh":5e-1},
+               {"CIP": 1e-6,"GLS": 1e-6,"Nitsche": 20,"Dual": 1e-4,"IF": 1e-2,"Tikh":1e-1},
                ]
 
 def SolveMetaMaterialStandardFEM(mesh,order=5):
@@ -231,8 +231,9 @@ def SolveHybridStabilized(mesh,orders,stabs,plot=False,export_vtk=False,vtk_str=
             #if reg != "host":
             aX +=  stabs["GLS"] * h**2 * calL(u[i],reg) * calL(v[i],reg) * dX[reg]
           
-        else: # The above terms do not make sense in the PML region, instead we add some mass 
-            aX += 1e-6 * u[i]*v[i]*dX[reg]
+        else: # The above terms do not make sense in the PML region, instead we add a scaled Tikhonov term 
+            #aX += 1e-6 * u[i]*v[i]*dX[reg]
+            aX += stabs["Tikh"] * h**(2*order) * u[i]*v[i]*dX[reg]
 
     for reg,i in zip( jumping_materials, jumping_materials_idx ):
         #aX += facets_G_indicator * 2*10*order*order/h*jumpv[i]*jumpu[i] * ddT[i]   
@@ -240,11 +241,9 @@ def SolveHybridStabilized(mesh,orders,stabs,plot=False,export_vtk=False,vtk_str=
 
     # dual stabilization 
     for reg,i in zip(region_list,idx_map):
-        #if reg != "PML":
-        if True:
-            aX += stabs["Dual"] * (-1)*gradz[i]*gradw[i]*dX[reg]
-            if reg != "cloak-inner":
-                aX += stabs["Dual"] * (-1)*z[i]*w[i]*dX[reg]
+        aX += stabs["Dual"] * (-1)*gradz[i]*gradw[i]*dX[reg]
+        if reg != "cloak-inner":
+            aX += stabs["Dual"] * (-1)*z[i]*w[i]*dX[reg]
         #else:
         #    aX += 1e-7 * (-1)*gradz[i]*gradw[i]*dX[reg]
     
