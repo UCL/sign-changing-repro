@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import sys
 sys.path.append("/home/janosch/projects//sign_changing_coeff/numexp")
 from meshes import MakeStructuredCavityMesh,CreateUnstructuredMesh
-solver = "pardiso"
-#solver = "umfpack"
+#solver = "pardiso"
+solver = "umfpack"
 from ngsolve.la import EigenValues_Preconditioner
 from decimal import Decimal
 
