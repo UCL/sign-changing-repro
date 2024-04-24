@@ -29,14 +29,14 @@ distributions the command for the latter is either `sudo systemctl start docker`
 ## Downloading the docker image from Zenodo
 * For this option the first two steps are the same as above.
 * The image can be downloaded [here]( ). 
-* Assuming that `interface-uc-repro.tar` is the filename of the downloaded image, please load the image with `sudo docker load < sign-changing-repro.tar`.
+* Assuming that `sign-changing-repro.tar` is the filename of the downloaded image, please load the image with `sudo docker load < sign-changing-repro.tar`.
 * Run the image with `sudo docker run -it janosch2888/sign-changing-repro:v1`.
 * Proceed further as described in [How to reproduce](#repro).
 
 ## Manual installation
 
 We need to install `NGSolve` and a small extension called `ngs_refsol` manually. For reference: The code has been developed 
-using commit `819b0d3da731bb078204fa54293be0d9feb45842` of the former and commit `f3c5d52cae6a8f24a488d94337178956ace07abc` of the latter. 
+using commit `819b0d3da731bb078204fa54293be0d9feb45842` of the former and commit `f3c5d52cae6a8f24a488d94337178956ace07abc` of the latter library. 
 Installation instructions for `NGSolve` using package managers are available [here](https://ngsolve.org/downloads) and instructions 
 to build from source are [here](https://docu.ngsolve.org/latest/install/install_sources.html). Once `NGSolve` has been installed we can 
 install `ngs_refsol` as follows: 
@@ -85,7 +85,7 @@ Change to directory `scripts`. Run
 Afterwards, new data files of the form `Cavity-k__i__-unstructured-easy.dat` will be available in the folder `data`. Here, __i__ in [1,2,3] describes the finite element order k as 
 defined in the paper. The data in the files is structured in the follwing columns: 
 
-* h: Proportional to the width of the mesh. 
+* h: proportional to the width of the mesh. 
 * h1nat: contains the H^1-error for the Galerkin stabilization not shown in the paper. 
 * hybridstab: contains the H^1-error for the new method proposed in this paper.
 
@@ -120,7 +120,7 @@ This will generate all the data.
 
 * The `vtk` data for the plot without(!) claok (Figure 4 (A)) is available in `NoCloak-order3.vtu`.
 * The `vtk` data for the plot with claok (Figure 4 (B)) is available in `MetaMaterial-order3.vtu`.
-* The data for the convergence plots in Figure 5 is available in the files MetaMaterial-k__i__.dat` where __i__ in [2,3,4] denotes the 
+* The data for the convergence plots in Figure 5 is available in the files `MetaMaterial-k__i__.dat` where __i__ in [2,3,4] denotes the 
 polynomial order of the FEM. These data files contain the following columns 
   * `h` is the mesh width. 
   * `Galerkin-inner` is the H1-error for the Galerkin method in subdomain \Omega_i.  
