@@ -339,7 +339,7 @@ for order in [1,2,3]:
     if order == 1:
         maxhs = all_maxhs
     elif order == 2:
-        maxhs = all_maxhs[:-3]
+        maxhs = all_maxhs[:-5]
     elif order == 3:
         #maxhs = all_maxhs[:-6]
         maxhs = all_maxhs[:-9]
