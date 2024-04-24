@@ -54,6 +54,28 @@ and proceed as described in [How to reproduce](#repro).
  
 
 # <a name="repro"></a> How to reproduce
+The `python` scripts for runnings the numerical experiments are located in the folder `scripts`.
+To run an experiment we change to this folder and run the corresponding file.
+After execution has finished the produced data will be available in the folder `data`.
+For the purpose of comparison, the folder `data_save` contains a copy of the data which has been used for the plots in the paper.
+The data in both folders should be identical.
+
+To generate the plots as shown in the article from the data just produced we change to the folder `plots`
+and compile the corresponding `latex` file.
+Below we decribe the above process for each of the figures in the article in detail.
+For viewing the generated pdf file, say `figure.pdf`, the figure has to be copied to the host machine.
+This can be done by executing the following commands in a new terminal window (not the one in which `docker` is run):
+
+    CONTAINER_ID=$(sudo docker ps -alq)
+    sudo docker cp $CONTAINER_ID:/home/app/sign-changing-repro/plots/figure.pdf \
+    /path/on/host/machine/figure.pdf
+
+Here, `/path/on/host/machine/` has to be adapted according to the file structure on the host machine.
+The file `figure.pdf` can then be found at the designated path on the host machine and inspected with a common pdf viewer.
+(The command above assumes that the reproduction image is the latest docker image to be started on the machine).
+Alternatively, if a recent latex distribution is available on the host machine it is also possible to copy data and tex files to the latter and
+compile the figures there.
+
 
 ## <a name="Fig2"></a> Figure 2
 Change to directory `scripts`. Run
