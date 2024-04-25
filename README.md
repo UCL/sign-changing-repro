@@ -23,14 +23,14 @@ run these commands.
 * After installation the `Docker daemon` has to be started. This can either be done on boot or manually. In most Linux 
 distributions the command for the latter is either `sudo systemctl start docker` or `sudo service docker start`.
 * Pull the docker image using the command `docker pull janosch2888/sign-changing-repro:v1`. 
-* Run the image with `sudo docker run -it janosch2888/sign-changing-repro:v1`.
+* Run the image with `sudo docker run -it janosch2888/sign-changing-repro:v1 bash`.
 * Proceed further as described in [How to reproduce](#repro).
 
 ## Downloading the docker image from Zenodo
 * For this option the first two steps are the same as above.
 * The image can be downloaded [here]( ). 
 * Assuming that `sign-changing-repro.tar` is the filename of the downloaded image, please load the image with `sudo docker load < sign-changing-repro.tar`.
-* Run the image with `sudo docker run -it janosch2888/sign-changing-repro:v1`.
+* Run the image with `sudo docker run -it janosch2888/sign-changing-repro:v1 bash`.
 * Proceed further as described in [How to reproduce](#repro).
 
 ## Manual installation
