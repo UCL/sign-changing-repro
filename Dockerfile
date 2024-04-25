@@ -6,6 +6,8 @@ USER root
 RUN chown -R ${NB_UID} ${HOME}
 USER ${NB_USER}
 
+RUN apt-get install -y texlive-full 
+
 RUN git clone https://gitlab.gwdg.de/learned_infinite_elements/ngs_refsol.git
 WORKDIR /home/app/ngs_refsol
 RUN python3 setup.py install --user
