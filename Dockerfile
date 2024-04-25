@@ -6,6 +6,9 @@ USER root
 RUN chown -R ${NB_UID} ${HOME}
 USER ${NB_USER}
 
+RUN apt-get update
+RUN apt-get install -y software-properties-common
+RUN add-apt-repository universe
 RUN apt-get install -y texlive-full 
 
 RUN git clone https://gitlab.gwdg.de/learned_infinite_elements/ngs_refsol.git
