@@ -9,6 +9,7 @@
 \DeclareFontShape{OT1}{pzc}{m}{it}{<-> s * [1.10] pzcmi7t}{}
 \DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
 \newcommand{\ddtn}{\operatorname{dtn}}
+\newcommand{\tnorm}[1]{\vert\hspace{-0.3mm}\Vert#1\Vert\hspace{-0.3mm}\vert}
 
 \pgfplotsset{
   legend style = {font=\small}
@@ -49,31 +50,40 @@
     %xtick={25, 125, 250, 500, 800, 1000},
     %axis x line*=middle,
     %axis y line=middle, 
-    ymin = 5.5e-4,
+    ymin = 1.5e-4,
     ymax = 1.0e0,
     %width=9cm,
     %restrict y to domain=-4e2:4e2,
     %xtick={0,2e3,4e3,6e3,8e3,10e3,12e3,14e3},
     xlabel= { $h$ },
-    legend pos = north west,
+    %legend pos = north west,
     %legend style = { column sep = 10pt, legend columns = 1, legend to name = grouplegend,},
     x label style={at={(axis description cs:0.8,+0.075)},anchor=east},
 	%title = { Unstructured mesh: $\norm{  u - u_h }_{ H^1(\Omega_+ \cup \Omega_- )  }$ },
 	%title = { Unstructured mesh $k=1$ },
-    %legend style={at={(0.5,-0.1)},anchor=north},
+    %legend style={at={(0.25,1.15)},anchor=north},
+    legend style={at={(0.25,0.925)},anchor=north},
 	]
 
-    \addplot[red,very thick,mark=*,mark options={scale=0.25}] 
+    \addplot[blue,very thick,mark=x,mark options={scale=0.25},forget plot] 
+   	table[x=h,y=H1] {../data/Cavity-nonsymmetric-k2-unstructured-critical-original.dat}; %\addlegendentry{Naive}%
+    %\addplot[blue,very thick,mark=x,mark options={scale=0.35}]  
+    %	table[x=h,y=IF] {../data/Cavity-nonsymmetric-k2-unstructured-critical.dat};  %\addlegendentry{Hybrid Nitsche}% 
+    \addplot[green!70!black,very thick,mark=x,mark options={scale=0.35}]  
+	table[x=h,y=L2] {../data/Cavity-nonsymmetric-k2-unstructured-critical-original.dat};  %\addlegendentry{Hybrid Nitsche}%
+    \addplot[orange,very thick,mark=x,mark options={scale=0.35}]  
+	table[x=h,y=tnorm] {../data/Cavity-nonsymmetric-k2-unstructured-critical-original.dat};  %\addlegendentry{Hybrid Nitsche}%
+    \addplot[red,very thick,mark=*,mark options={scale=0.25},forget plot] 
    	table[x=h,y=H1] {../data/Cavity-nonsymmetric-k2-unstructured-critical.dat}; %\addlegendentry{Naive}%
-    \addplot[blue,very thick,mark=x,mark options={scale=0.35}]  
-	table[x=h,y=IF] {../data/Cavity-nonsymmetric-k2-unstructured-critical.dat};  %\addlegendentry{Hybrid Nitsche}%
     \addplot[lightgray,dashed,ultra thick]
 	table[mark=none,x=h,y expr ={3*\thisrowno{0}*\thisrowno{0}}] {../data/Cavity-nonsymmetric-k2-unstructured-critical.dat};  %\addlegendentry{$ \mathcal{O}(h) $ } %
      
     \draw[black, very thick] (axis cs:0.01,6.8e-4) rectangle (axis cs:0.0375,2.5e-3);
     \node[] (Z1) at (axis cs: 0.045, 1.5e-3) {};
 
-    \legend{ $H^1(\Omega_+ \cup \Omega_-)$, $\approx H^{1/2}(\Gamma)$, $\mathcal{O}(h^2)$  } 
+    %\legend{$H^1(\Omega_+ \cup \Omega_-)$, $\approx H^{1/2}(\Gamma)$, $L^2(\Omega_+ \cup \Omega_-)$, $\tnorm{ (\hat{u} - \hat u_h, 0) }$, $\mathcal{O}(h^2)$  } 
+    %\legend{$H^1(\Omega_+ \cup \Omega_-)$, $L^2(\Omega_+ \cup \Omega_-)$, $\tnorm{ (\hat{u} - \hat u_h, 0) }$, $H^1(\Omega_+ \cup \Omega_-)$ mod., $\mathcal{O}(h^2)$  } 
+    \legend{ $L^2(\Omega_+ \cup \Omega_-)$, $\tnorm{ (\hat{u} - \hat u_h, 0) }$, $\mathcal{O}(h^2)$  } 
 
     \nextgroupplot[ 
     %xmode=log,
@@ -94,15 +104,18 @@
 	%title = { Symmetric mesh, $k=1$},
 	]
 
+    
+    \addplot[blue,very thick,mark=x,mark options={scale=0.25}] 
+   	table[x=fh,y=H1] {../data/Cavity-nonsymmetric-k2-unstructured-critical-log-original.dat}; %\addlegendentry{Naive}%
     \addplot[red,very thick,mark=*,mark options={scale=0.25}] 
    	table[x=fh,y=H1] {../data/Cavity-nonsymmetric-k2-unstructured-critical-log.dat}; %\addlegendentry{Naive}%
     %\addplot[blue,very thick,mark=x,mark options={scale=0.35}]  
     %	table[x=h,y=IF] {../data/Cavity-nonsymmetric-k2-unstructured-critical-.dat};  %\addlegendentry{Hybrid Nitsche}%
-    \addplot[lightgray,dashed,ultra thick] 
+    \addplot[lightgray,dotted,ultra thick] 
 	table[mark=none,x=fh,y=ref] {../data/Cavity-nonsymmetric-k2-unstructured-critical-log.dat};  %\addlegendentry{$ \mathcal{O}(h) $ } %
 
     \node[] (Z2) at (axis cs: 0.05, 1.045e-3) {};
-   \legend{ $H^1(\Omega_+ \cup \Omega_-)$, $ C \vert \log(h) \vert^{-2}$  } 
+   \legend{ $H^1(\Omega_+ \cup \Omega_-)$, $H^1(\Omega_+ \cup \Omega_-)$ mod., $ C \vert \log(h) \vert^{-2}$  } 
     \end{groupplot}
 
   \node[] (Z3) at (6.5,-0.5) {  $\vert u(x) - u_h(x) \vert$};

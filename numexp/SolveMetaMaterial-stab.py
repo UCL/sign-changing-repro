@@ -8,6 +8,11 @@ from math import pi
 from ngs_refsol import FundamentalSolution,FundamentalSolution_grad
 import mpmath as mp 
 
+if ( len(sys.argv) > 1 and int(sys.argv[1]) in [0,1,2,3]  ):
+    mm_PML = int(sys.argv[1])
+else:
+    raise ValueError('Ivalid input')
+
 RPML = 3.75
 RSource = 3.5
 a = 1.0
@@ -30,7 +35,7 @@ r = sqrt(x**2+y**2)
 # PML parameters
 eta = RPML+1.0  # problem is discretized on annulus with radii [a,eta]
 #mm_PML = 0 # profile of PML -> polynomial of degree mm_PML
-mm_PML = 1 # profile of PML -> polynomial of degree mm_PML
+#mm_PML = 1 # profile of PML -> polynomial of degree mm_PML
 sigma0 = 4.5 # amplitude of PML
 #sigma0 = 1 # amplitude of PML
 rad_min = RPML  # start of PML
@@ -122,7 +127,7 @@ error_object = "object"
 stabs_order = [{"CIP": 1e-6,"GLS": 1e-6,"Nitsche": 20,"Dual": 1e-6,"IF": 1e-2,"Tikh":2e-4,"proj":1}, 
                {"CIP": 1e-6,"GLS": 1e-6,"Nitsche": 20,"Dual": 1e-6,"IF": 1e-2, "Tikh":8e-2,"proj":1},
                {"CIP": 1e-5,"GLS": 1e-5,"Nitsche": 20,"Dual": 1e-4,"IF": 1e-2,"Tikh":5e-1,"proj":1},
-               {"CIP": 1e-6,"GLS": 1e-6,"Nitsche": 20,"Dual": 1e-4,"IF": 1e-2,"Tikh":1e-1,"proj":1e-3},
+               {"CIP": 1e-6,"GLS": 1e-6,"Nitsche": 20,"Dual": 1e-4,"IF": 1e-2,"Tikh":1e-1,"proj":1},
                ]
 
 def SolveMetaMaterialStandardFEM(mesh,order=5):
@@ -467,15 +472,19 @@ def SolveHybridStabilized(mesh,orders,stabs,plot=False,export_vtk=False,vtk_str=
 
 all_maxhs = np.linspace(0.8,0.2,6,endpoint=False).tolist() + np.linspace(0.2,0.1,6,endpoint=False).tolist() +  np.linspace(0.1,0.025,25,endpoint=True).tolist()
 
-all_maxhs = np.linspace(0.8,0.2,6,endpoint=False).tolist() + np.linspace(0.2,0.1,6,endpoint=False).tolist() +  np.linspace(0.1,0.05,10,endpoint=True).tolist()
+#all_maxhs = np.linspace(0.8,0.2,6,endpoint=False).tolist() + np.linspace(0.2,0.1,6,endpoint=False).tolist() +  np.linspace(0.1,0.05,10,endpoint=True).tolist()
 #all_maxhs = np.linspace(0.8,0.2,6,endpoint=False).tolist() + np.linspace(0.2,0.1,6,endpoint=False).tolist() +  np.linspace(0.1,0.05,10,endpoint=True).tolist()
 #all_maxhs = np.linspace(0.08,0.07,20,endpoint=True).tolist()
 #all_maxhs = np.linspace(0.8,0.2,6,endpoint=False).tolist() + np.linspace(0.2,0.1,6,endpoint=False).tolist() +  np.linspace(0.1,0.025,25,endpoint=True).tolist()
 
 
+orders_comp = [1,2,3]
+
 #for order in [1,2,3]:
+
 #for order in [2]:
-for order in [3]:
+#for order in [3]:
+for order in orders_comp: 
 
     stabs = stabs_order[order-1] 
     orders = {"primal-bulk": order,
@@ -484,9 +493,9 @@ for order in [3]:
           "dual-IF": order}
 
     # Generate Plot of MetaMaterial 
-    if False: 
-    #if order == 3:
-        mesh = CreateMetamaterialMesh(maxh=0.08,order_geom=5)
+    #if False: 
+    if order == 3 and mm_PML == 1:
+        mesh = CreateMetamaterialMesh(maxh=0.08,order_geom=order)
         #mesh = CreateMetamaterialMesh(maxh=0.1,order_geom=5)
         SolveHybridStabilized(mesh,orders,stabs_order[order-1],plot=True, export_vtk=True,vtk_str="MetaMaterial-order{0}".format(order)) 
 
@@ -539,7 +548,11 @@ for order in [3]:
     plt.clf()
 
     #name_str = "MetaMaterial-k{0}-mPML.dat".format(order)
-    name_str = "MetaMaterial-k{0}-stab.dat".format(order)
+    if mm_PML == 1:
+        name_str = "MetaMaterial-k{0}-stab.dat".format(order)
+    else: 
+        name_str = "MetaMaterial-k{0}-stab_mmPML{1}.dat".format(order,mm_PML)
+
     results = [maxhnp, np.array(err_Galerkin_inner,dtype=float), np.array(err_Galerkin_outer,dtype=float), np.array( err_Stabilized_outer ,dtype=float), np.array( err_Stabilized_inner ,dtype=float) ]
     header_str = "h Galerkin-inner Galerkin-outer Hybridstab-outer Hybridstab-inner" 
 
@@ -550,7 +563,7 @@ for order in [3]:
                                        comments = '')
 
     # Genrate plot without cloak (no MetaMaterial layer)
-    if order == 3:
+    if order == 3 and mm_PML == 1:
         mesh = CreateMetamaterialMesh(maxh=0.08,order_geom=5)
         #mesh = CreateMetamaterialMesh(maxh=0.1,order_geom=5)
         orders = {"primal-bulk": order,
