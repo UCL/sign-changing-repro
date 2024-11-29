@@ -6,7 +6,6 @@ from meshes import MakeStructuredCavityMesh,CreateUnstructuredMesh,CreateMetamat
 solver = "umfpack"
 from math import pi 
 from ngs_refsol import FundamentalSolution,FundamentalSolution_grad
-import mpmath as mp 
 
 if ( len(sys.argv) > 1 and int(sys.argv[1]) in [0,1,2,3]  ):
     mm_PML = int(sys.argv[1])
