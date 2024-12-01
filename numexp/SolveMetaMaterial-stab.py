@@ -218,14 +218,17 @@ def SolveHybridStabilized(mesh,orders,stabs,plot=False,export_vtk=False,vtk_str=
     VGamma_dual = Compress(Q_dual, active_dofs = Q_dual.GetDofs(mesh.Boundaries("Gamma-internal|Gamma-outer"))  )
 
 
-    Vh = Vp_primal *  Vm_primal *  VGamma_primal *  Vp_dual *  Vm_dual * VGamma_dual *  VGamma_primal 
+    Vh = Vp_primal *  Vm_primal *  VGamma_primal *  Vp_dual *  Vm_dual * VGamma_dual *  VGamma_primal  *  VGamma_primal 
 
-    up,um,uG,zp,zm,zG,xiG = Vh.TrialFunction()
-    vp,vm,vG,wp,wm,wG,muG  = Vh.TestFunction()
+    up,um,uG,zp,zm,zG,xiGp,xiGm = Vh.TrialFunction()
+    vp,vm,vG,wp,wm,wG,muGp,muGm  = Vh.TestFunction()
     u = [up,um]
     v = [vp,vm]
     z = [zp,zm]
     w = [wp,wm]
+    xiG = [xiGp, xiGm]
+    muG = [muGp, muGm]
+
     gradu, gradz, gradv, gradw = [[grad(fun[i]) for i in [0, 1]] for fun in [u, z, v, w]]
     jumpu, jumpz, jumpv, jumpw = [ [ fun[i] - fhat  for i in [0, 1]] for fun,fhat in zip([u, z, v, w],[uG,zG,vG,wG]) ]
 
@@ -327,7 +330,7 @@ def SolveHybridStabilized(mesh,orders,stabs,plot=False,export_vtk=False,vtk_str=
             #if reg != "host":
             aX +=  stabs["GLS"] * h**2 * calL(u[i],reg) * calL(v[i],reg) * dX[reg]
           
-        else: # The above terms do not make sense in the PML region, instead we add a scaled Tikhonov term 
+        else: # 
             #aX += 1e-6 * u[i]*v[i]*dX[reg] 
             aX +=  stabs["CIP"] * h * InnerProduct( (A_coeff* gradu[i] - A_coeff * gradu[i].Other()) * nF , (A_coeff * gradv[i] - A_coeff * gradv[i].Other()) * nF ) * dF[reg] 
             aX +=  stabs["GLS"] * h**2 * calL_PML(u[i],reg) * calL_PML(v[i],reg) * dX[reg]
@@ -350,9 +353,18 @@ def SolveHybridStabilized(mesh,orders,stabs,plot=False,export_vtk=False,vtk_str=
     #aX += facets_G_indicator *  (xiG - jump_u_Gamma["Gamma-internal"] * nF) * muG * dx( element_boundary=True, definedon=mesh.Materials("cloak-inner"))
     #aX += facets_G_indicator *  (xiG - jump_u_Gamma["Gamma-outer"] * nF) * muG * dx( element_boundary=True, definedon=mesh.Materials("cloak-outer"))
     
-    aX += facets_G_indicator *  (xiG - jump_u_Gamma * nF) * muG * dx( skeleton=True)
-    aX += facets_G_indicator * stabs["proj"] * h * (jump_u_Gamma * nF - xiG) * ( jump_v_Gamma * nF - muG )  * dx( skeleton=True)
+    #aX += facets_G_indicator *  (xiG - jump_u_Gamma * nF) * muG * dx( skeleton=True)
+    #aX += facets_G_indicator * stabs["proj"] * h * (jump_u_Gamma * nF - xiG) * ( jump_v_Gamma * nF - muG )  * dx( skeleton=True)
 
+    for reg,i in zip( jumping_materials, jumping_materials_idx ):
+        # project
+        aX += facets_G_indicator * (sigma_dic[reg] * gradu[i] * nF  -  xiG[i] ) * muG[i] * ddT[reg]   
+        #aX += facets_G_indicator *  xiG[i] * muG[i] * ddT[reg]   
+        # stabilize
+        #aX += facets_G_indicator * (sigma_dic[reg] * gradu[i] * nF  -  xiG[i] ) * ( sigma_dic[reg] * gradv[i] * nF - muG[i] ) * ddT[reg]   
+        #aX += facets_G_indicator * (sigma_dic[reg] * gradu[i] * nF  -  xiG[i] ) * muG[i] * ddT[reg]   
+        # stabilize
+        aX +=  h * facets_G_indicator * (sigma_dic[reg] * gradu[i] * nF  -  xiG[i] ) * ( sigma_dic[reg] * gradv[i] * nF - muG[i] ) * ddT[reg]   
 
     #aX += facets_G_indicator *  xiG  * muG * dx( skeleton=True)
     #aX += facets_G_indicator * stabs["proj"] * h * (jump_u_Gamma["Gamma-internal"] * nF - xiG) * ( jump_v_Gamma["Gamma-internal"] * nF - muG )  * dx( skeleton=True)
