@@ -35,8 +35,11 @@ r = sqrt(x**2+y**2)
 eta = RPML+1.0  # problem is discretized on annulus with radii [a,eta]
 #mm_PML = 0 # profile of PML -> polynomial of degree mm_PML
 #mm_PML = 1 # profile of PML -> polynomial of degree mm_PML
-#sigma0 = 4.5 # amplitude of PML
-sigma0 = 1 # amplitude of PML
+sigma0 = 4.5 # amplitude of PML
+#sigma0 = 1 # amplitude of PML
+if mm_PML == 0:
+    sigma0 = 1 
+    print("Setting, sigma0 =", sigma0 = 1) 
 rad_min = RPML  # start of PML
 rad_max = eta # end of PML
 
@@ -581,5 +584,5 @@ for order in orders_comp:
                       "primal-IF": order,
                       "dual-bulk": order,
                       "dual-IF": order}
-    #    SolveHybridStabilized(mesh,orders,stabs_order[order-1],plot=True, export_vtk=True,vtk_str="NoCloak-order{0}".format(order),remove_cloak=True) 
+        SolveHybridStabilized(mesh,orders,stabs_order[order-1],plot=True, export_vtk=True,vtk_str="NoCloak-order{0}".format(order),remove_cloak=True) 
 
