@@ -28,7 +28,7 @@ distributions the command for the latter is either `sudo systemctl start docker`
 
 ## Downloading the docker image from Zenodo
 * For this option the first two steps are the same as above.
-* The image can be downloaded [here]( ). 
+* The image can be downloaded [here](https://doi.org/10.5281/zenodo.11067990). 
 * Assuming that `sign-changing-repro.tar` is the filename of the downloaded image, please load the image with `sudo docker load < sign-changing-repro.tar`.
 * Run the image with `sudo docker run -it janosch2888/sign-changing-repro:v2 bash`.
 * Proceed further as described in [How to reproduce](#repro).
