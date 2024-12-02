@@ -35,8 +35,8 @@ r = sqrt(x**2+y**2)
 eta = RPML+1.0  # problem is discretized on annulus with radii [a,eta]
 #mm_PML = 0 # profile of PML -> polynomial of degree mm_PML
 #mm_PML = 1 # profile of PML -> polynomial of degree mm_PML
-sigma0 = 4.5 # amplitude of PML
-#sigma0 = 1 # amplitude of PML
+#sigma0 = 4.5 # amplitude of PML
+sigma0 = 1 # amplitude of PML
 rad_min = RPML  # start of PML
 rad_max = eta # end of PML
 
