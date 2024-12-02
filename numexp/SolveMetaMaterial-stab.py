@@ -39,7 +39,7 @@ sigma0 = 4.5 # amplitude of PML
 #sigma0 = 1 # amplitude of PML
 if mm_PML == 0:
     sigma0 = 1 
-    print("Setting, sigma0 =", sigma0 = 1) 
+    print("Setting, sigma0 =", sigma0) 
 rad_min = RPML  # start of PML
 rad_max = eta # end of PML
 
